@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-10
+
+### Added
+- `OTLP.LogRecord.init(time: Time.Instant, observedTime: Time.Instant?, ...)` — convenience initializer accepting `Time.Instant` for the timestamp fields.
+- `OTLP.LogRecord.time` / `OTLP.LogRecord.observedTime` computed properties returning `Time.Instant`.
+- 4 new tests covering wire-field translation, getter round-trip, both-field initialization, and negative-instant clamping.
+
+### Dependencies
+- New: `swift-time` 0.1.0 — for the `Time.Instant` type used by the helpers.
+
+### Migration
+- Additive only. The existing `timeUnixNano: UInt64` / `observedTimeUnixNano: UInt64` fields and the canonical `init(...)` continue to work unchanged. Negative `Time.Instant` values clamp to `0` on the wire (pre-1970 log records don't occur in real exporter data).
+
 ## [0.1.0] - 2026-05-09
 
 ### Added
