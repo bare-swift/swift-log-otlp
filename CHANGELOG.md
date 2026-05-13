@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-13
+
+### Added
+- `OTLP.LogRecord.init(..., traceContext: OTLP.TraceContext, ...)` — convenience initializer that fills `traceID`, `spanID`, and `flags` from an `OTLP.TraceContext` value. Per OTLP spec the low 8 bits of `flags` carry the W3C `traceFlags` byte; high 24 bits remain zero.
+- 6 new tests covering correlation-field propagation, all-bits propagation, high-bit zeroing, defaults, and wire-byte equivalence with the canonical initializer.
+
+### Dependencies
+- New: `swift-tracing-otlp` 0.3.0 — for the `OTLP.TraceContext` type.
+
+### Migration
+- Additive only. All v0.2 types, initializers, and helpers unchanged. The canonical `init(...)` with explicit `flags` / `traceID` / `spanID` fields continues to work.
+
+### Phase 14
+- Tranche 14C of [RFC-0019](https://github.com/bare-swift/bare-swift/blob/main/rfcs/0019-phase-14-anchor-otlp-cross-signal.md). Closes Phase 14 — OTLP cross-signal correlation now reachable from a single propagation value at the call site.
+
 ## [0.2.0] - 2026-05-10
 
 ### Added

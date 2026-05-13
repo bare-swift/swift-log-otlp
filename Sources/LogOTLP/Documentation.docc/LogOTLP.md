@@ -58,6 +58,10 @@ method on the `OTLP` namespace re-exported from swift-otlp-exporter.
 
 ## Topics
 
+### Cross-signal correlation
+
+`OTLP.LogRecord` accepts an `OTLP.TraceContext` (from swift-tracing-otlp) to fill `traceID` / `spanID` / `flags` in one call. See the README for usage.
+
 ### Essentials
 
 - ``LogOTLPError``

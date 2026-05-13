@@ -9,7 +9,7 @@ Part of the [bare-swift](https://github.com/bare-swift) ecosystem.
 Add to your `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/bare-swift/swift-log-otlp.git", from: "0.1.0")
+.package(url: "https://github.com/bare-swift/swift-log-otlp.git", from: "0.3.0")
 ```
 
 Then depend on the `LogOTLP` product:
@@ -52,6 +52,30 @@ let request = OTLP.ExportLogsServiceRequest(
 let payload: Bytes = OTLP.encodeLogs(request)
 // → POST /v1/logs with Content-Type: application/x-protobuf
 ```
+
+## Cross-signal correlation
+
+Since v0.3, `OTLP.LogRecord` accepts an `OTLP.TraceContext` (from [swift-tracing-otlp](https://github.com/bare-swift/swift-tracing-otlp)) to fill the W3C trace correlation fields in one shot:
+
+```swift
+import LogOTLP
+import TracingOTLP
+import OTLPExporter
+
+let ctx = OTLP.TraceContext.parse(
+    traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+)!
+
+let record = OTLP.LogRecord(
+    timeUnixNano: 1_700_000_000_000_000_000,
+    severityNumber: .info,
+    body: .string("user logged in"),
+    traceContext: ctx
+)
+// record.traceID, .spanID populated; record.flags == 0x01
+```
+
+Per the OTLP spec, the low 8 bits of `LogRecord.flags` carry the W3C `traceFlags` byte; the convenience init sets that mapping for you.
 
 ## Scope
 
