@@ -37,4 +37,89 @@ struct TraceContextIntegrationTests {
         #expect(record.severityNumber == .info)
         #expect(record.body == .string("hello"))
     }
+
+    @Test("traceFlags=0 produces flags=0")
+    func zeroFlagsPropagate() {
+        let ctx = OTLP.TraceContext(
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID,
+            traceFlags: 0x00
+        )
+        let record = OTLP.LogRecord(traceContext: ctx)
+        #expect(record.flags == 0)
+    }
+
+    @Test("all 8 bits of traceFlags propagate into low 8 bits of flags")
+    func allEightBitsPropagate() {
+        let ctx = OTLP.TraceContext(
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID,
+            traceFlags: 0xff
+        )
+        let record = OTLP.LogRecord(traceContext: ctx)
+        #expect(record.flags == 0xff)
+    }
+
+    @Test("high 24 bits of flags stay zero")
+    func highBitsZero() {
+        let ctx = OTLP.TraceContext(
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID,
+            traceFlags: 0x01
+        )
+        let record = OTLP.LogRecord(traceContext: ctx)
+        #expect(record.flags & 0xffff_ff00 == 0)
+    }
+
+    @Test("defaults match the canonical init (everything zero/empty)")
+    func defaultsMatchCanonical() {
+        let ctx = OTLP.TraceContext(
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID,
+            traceFlags: 0x01
+        )
+        let record = OTLP.LogRecord(traceContext: ctx)
+        #expect(record.timeUnixNano == 0)
+        #expect(record.observedTimeUnixNano == 0)
+        #expect(record.severityNumber == .unspecified)
+        #expect(record.severityText == "")
+        #expect(record.body == nil)
+        #expect(record.attributes.isEmpty)
+        #expect(record.droppedAttributesCount == 0)
+        #expect(record.eventName == "")
+    }
+
+    @Test("encodes to the same wire bytes as a hand-built canonical record")
+    func wireRoundTrip() {
+        let ctx = OTLP.TraceContext(
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID,
+            traceFlags: 0x01
+        )
+        let viaContext = OTLP.LogRecord(
+            timeUnixNano: 1_700_000_000_000_000_000,
+            severityNumber: .info,
+            body: .string("hello"),
+            traceContext: ctx
+        )
+        let viaCanonical = OTLP.LogRecord(
+            timeUnixNano: 1_700_000_000_000_000_000,
+            severityNumber: .info,
+            body: .string("hello"),
+            flags: 0x01,
+            traceID: Self.canonicalTraceID,
+            spanID: Self.canonicalSpanID
+        )
+        let req1 = OTLP.ExportLogsServiceRequest(resourceLogs: [
+            OTLP.ResourceLogs(
+                scopeLogs: [OTLP.ScopeLogs(logRecords: [viaContext])]
+            )
+        ])
+        let req2 = OTLP.ExportLogsServiceRequest(resourceLogs: [
+            OTLP.ResourceLogs(
+                scopeLogs: [OTLP.ScopeLogs(logRecords: [viaCanonical])]
+            )
+        ])
+        #expect(OTLP.encodeLogs(req1) == OTLP.encodeLogs(req2))
+    }
 }
